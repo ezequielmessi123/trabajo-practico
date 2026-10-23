@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎓 Gestor de Egresados - Control Financiero</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+            },
+            gold: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .shadow-xl, .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- =============================== -->
+  <!-- TOAST NOTIFICATIONS CONTAINER   -->
+  <!-- =============================== -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- =============================== -->
+  <!-- NAVBAR / HEADER                 -->
+  <!-- =============================== -->
+  <header class="bg-gradient-to-r from-brand-900 via-brand-700 to-indigo-800 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-gold-400 shadow-inner">
+            <i data-lucide="graduation-cap" class="w-7 h-7"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Gestor de Egresados</h1>
+              <span class="bg-gold-500/20 text-gold-400 border border-gold-500/30 text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Finanzas Promo
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-brand-200">Viaje de fin de curso, cena, fiesta y eventos 🎓✨</p>
+          </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <button id="btn-demo" class="text-xs bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-2 px-3 rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95" title="Carga ejemplos reales para probar">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-400"></i>
+            <span>Cargar Ejemplos</span>
+          </button>
+          <button id="btn-export-csv" class="text-xs bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-2 px-3 rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Exportar CSV</span>
+          </button>
+          <button onclick="window.print()" class="text-xs bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-2 px-3 rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+            <i data-lucide="printer" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span>Imprimir</span>
+          </button>
+          <button id="btn-clear-all" class="text-xs bg-rose-500/20 hover:bg-rose-600/40 border border-rose-400/30 text-rose-200 font-medium py-2 px-3 rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-rose-400"></i>
+            <span>Reiniciar</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- =============================== -->
+  <!-- MAIN CONTENT CONTAINER          -->
+  <!-- =============================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+    
+    <!-- DASHBOARD: 3 STAT CARDS + META -->
+    <section>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- Tarjeta: Total Recaudado -->
+        <div class="bg-white rounded-3xl p-6 border border-emerald-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-110 transition-transform -z-0"></div>
+          <div class="relative z-10 flex items-start justify-between">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-1 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                Total Recaudado
+              </p>
+              <h3 id="stat-income" class="text-2xl sm:text-3xl font-extrabold text-slate-800">$0</h3>
+              <p id="stat-income-count" class="text-xs text-slate-400 mt-2 font-medium">0 ingresos registrados</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-inner">
+              <i data-lucide="arrow-down-left" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjeta: Gastos Totales -->
+        <div class="bg-white rounded-3xl p-6 border border-rose-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-50 rounded-full group-hover:scale-110 transition-transform -z-0"></div>
+          <div class="relative z-10 flex items-start justify-between">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-rose-600 mb-1 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+                Gastos Totales
+              </p>
+              <h3 id="stat-expenses" class="text-2xl sm:text-3xl font-extrabold text-slate-800">$0</h3>
+              <p id="stat-expenses-count" class="text-xs text-slate-400 mt-2 font-medium">0 gastos registrados</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-inner">
+              <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjeta: Balance Restante -->
+        <div class="bg-white rounded-3xl p-6 border border-brand-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-50 rounded-full group-hover:scale-110 transition-transform -z-0"></div>
+          <div class="relative z-10 flex items-start justify-between">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-brand-600 mb-1 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-brand-500 inline-block"></span>
+                Balance Restante
+              </p>
+              <h3 id="stat-balance" class="text-2xl sm:text-3xl font-extrabold text-slate-800">$0</h3>
+              <p id="stat-balance-status" class="text-xs text-slate-400 mt-2 font-medium">Fondo disponible</p>
+            </div>
+            <div id="stat-balance-icon-bg" class="w-12 h-12 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center shadow-inner">
+              <i data-lucide="wallet" class="w-6 h-6"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjeta: Meta / Objetivo Financiero -->
+        <div class="bg-gradient-to-br from-indigo-900 to-brand-800 text-white rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <p class="text-xs font-bold uppercase tracking-wider text-gold-400">Meta Promo</p>
+                <button id="btn-edit-goal" class="text-brand-200 hover:text-white p-0.5 rounded transition" title="Modificar meta económica">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+              <h3 id="stat-goal" class="text-2xl sm:text-3xl font-extrabold text-white mt-0.5">$0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-white/10 text-gold-400 flex items-center justify-center border border-white/10">
+              <i data-lucide="target" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs text-brand-200 font-semibold">
+              <span id="goal-progress-text">Progreso: 0%</span>
+              <span id="goal-remaining-text">Faltan: $0</span>
+            </div>
+            <div class="w-full bg-white/20 rounded-full h-2.5 overflow-hidden p-0.5">
+              <div id="goal-progress-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- MAIN TWO-COLUMN SECTION -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- =============================== -->
+      <!-- COLUMNA IZQUIERDA: FORMULARIO   -->
+      <!-- =============================== -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Formulario Card -->
+        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm relative">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+            <div class="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center font-bold">
+              <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">Registrar Movimiento</h2>
+              <p class="text-xs text-slate-400">Anota cada ingreso o gasto de la comisión</p>
+            </div>
+          </div>
+
+          <form id="movement-form" class="space-y-4" novalidate>
+            
+            <!-- Selector Tipo de Movimiento: Ingreso vs Gasto -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Tipo de Operación</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="cursor-pointer">
+                  <input type="radio" name="movement-type" value="ingreso" class="peer sr-only" checked>
+                  <div class="p-3 text-center rounded-2xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 peer-checked:text-emerald-700 font-bold text-sm transition-all flex items-center justify-center gap-2 text-slate-500 hover:bg-slate-50">
+                    <i data-lucide="arrow-down-left" class="w-4 h-4 text-emerald-500"></i>
+                    <span>Ingreso (+)</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="movement-type" value="gasto" class="peer sr-only">
+                  <div class="p-3 text-center rounded-2xl border-2 border-slate-200 peer-checked:border-rose-500 peer-checked:bg-rose-50/50 peer-checked:text-rose-700 font-bold text-sm transition-all flex items-center justify-center gap-2 text-slate-500 hover:bg-slate-50">
+                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-500"></i>
+                    <span>Gasto (-)</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Descripción -->
+            <div>
+              <label for="desc-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Descripción <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="desc-input" 
+                  name="description" 
+                  placeholder="Ej: Cuota mensual Martín, Venta de tortas..." 
+                  class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                  required
+                >
+              </div>
+              <p id="desc-error" class="text-xs text-rose-500 mt-1 hidden font-medium">Por favor ingresa una descripción válida.</p>
+            </div>
+
+            <!-- Monto & Fecha (Grid) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Monto -->
+              <div>
+                <label for="amount-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Monto ($) <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                  <span class="absolute left-4 top-3.5 text-slate-400 font-bold text-sm">$</span>
+                  <input 
+                    type="number" 
+                    id="amount-input" 
+                    name="amount" 
+                    step="any"
+                    min="1"
+                    placeholder="0.00" 
+                    class="w-full pl-8 pr-4 py-3 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                    required
+                  >
+                </div>
+                <p id="amount-error" class="text-xs text-rose-500 mt-1 hidden font-medium">Ingresa un monto mayor a 0.</p>
+              </div>
+
+              <!-- Fecha -->
+              <div>
+                <label for="date-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Fecha
+                </label>
+                <input 
+                  type="date" 
+                  id="date-input" 
+                  name="date" 
+                  class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                >
+              </div>
+            </div>
+
+            <!-- Categoría -->
+            <div>
+              <label for="category-select" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Categoría <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <select 
+                  id="category-select" 
+                  name="category"
+                  class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition appearance-none bg-white cursor-pointer"
+                  required
+                >
+                  <!-- Se llena dinámicamente según sea Ingreso o Gasto -->
+                </select>
+                <div class="pointer-events-none absolute right-4 top-3.5 text-slate-400">
+                  <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón Submit -->
+            <button 
+              type="submit" 
+              class="w-full mt-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 active:scale-[0.99]"
+            >
+              <i data-lucide="plus" class="w-5 h-5"></i>
+              <span>Guardar Movimiento</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Gráfico de Distribución (Chart.js) -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-brand-600"></i>
+              Distribución por Categorías
+            </h3>
+            <span id="chart-badge" class="text-xs bg-slate-100 text-slate-600 font-semibold px-2.5 py-1 rounded-full">Gastos</span>
+          </div>
+          <div class="relative h-56 flex items-center justify-center">
+            <canvas id="category-chart"></canvas>
+            <div id="chart-empty" class="text-center p-4 hidden">
+              <p class="text-xs text-slate-400">Aún no hay suficientes datos para graficar</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- =============================== -->
+      <!-- COLUMNA DERECHA: LISTA / TABLA  -->
+      <!-- =============================== -->
+      <div class="lg:col-span-7 space-y-4">
+        
+        <!-- Barra de Búsqueda y Filtros -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-sm space-y-3">
+          
+          <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <!-- Barra de Búsqueda -->
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
+              <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Buscar por descripción..." 
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+              >
+            </div>
+
+            <!-- Filtro por Tipo -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+              <button data-filter="all" class="filter-btn text-xs font-bold py-1.5 px-3 rounded-lg bg-white text-slate-800 shadow-sm transition">
+                Todos
+              </button>
+              <button data-filter="ingreso" class="filter-btn text-xs font-bold py-1.5 px-3 rounded-lg text-slate-600 hover:text-slate-800 transition">
+                Ingresos
+              </button>
+              <button data-filter="gasto" class="filter-btn text-xs font-bold py-1.5 px-3 rounded-lg text-slate-600 hover:text-slate-800 transition">
+                Gastos
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtro por Categoría -->
+          <div class="flex items-center gap-2 pt-1 border-t border-slate-100 overflow-x-auto pb-1 text-xs">
+            <span class="text-slate-400 font-semibold shrink-0">Filtrar categoría:</span>
+            <select id="filter-category" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer">
+              <option value="all">Todas las categorías</option>
+            </select>
+            <span id="filtered-count" class="text-slate-400 ml-auto shrink-0 font-medium">0 encontrados</span>
+          </div>
+
+        </div>
+
+        <!-- Tabla / Lista de Movimientos -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+          
+          <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                <i data-lucide="receipt" class="w-4 h-4"></i>
+              </div>
+              <h3 class="font-bold text-slate-800">Historial de Movimientos</h3>
+            </div>
+            <span id="total-records-badge" class="text-xs bg-brand-50 text-brand-700 font-semibold px-2.5 py-1 rounded-full border border-brand-100">
+              0 registros
+            </span>
+          </div>
+
+          <!-- Table Wrapper -->
+          <div class="overflow-x-auto custom-scrollbar max-h-[580px]">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-50/75 text-[11px] uppercase tracking-wider text-slate-400 font-bold sticky top-0 backdrop-blur-sm z-10 border-b border-slate-100">
+                <tr>
+                  <th class="py-3 px-4">Fecha</th>
+                  <th class="py-3 px-4">Descripción</th>
+                  <th class="py-3 px-4">Categoría</th>
+                  <th class="py-3 px-4 text-right">Monto</th>
+                  <th class="py-3 px-4 text-center no-print">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="movements-tbody" class="divide-y divide-slate-100 text-sm">
+                <!-- Se inyecta con JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Estado Vacío -->
+          <div id="empty-state" class="py-16 px-4 text-center flex flex-col items-center justify-center">
+            <div class="w-16 h-16 rounded-3xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4">
+              <i data-lucide="sparkles" class="w-8 h-8"></i>
+            </div>
+            <h4 class="text-base font-bold text-slate-700">Aún no hay movimientos</h4>
+            <p class="text-xs text-slate-400 max-w-sm mt-1">Registra las primeras cuotas, rifas o gastos del viaje y la fiesta para comenzar.</p>
+            <button id="btn-demo-empty" class="mt-4 text-xs bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-4 rounded-xl shadow-sm transition">
+              Cargar datos de ejemplo 🎓
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- =============================== -->
+  <!-- MODAL: EDITAR META              -->
+  <!-- =============================== -->
+  <div id="goal-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <i data-lucide="target" class="w-5 h-5 text-gold-500"></i>
+          Meta de la Promo
+        </h4>
+        <button id="btn-close-goal-modal" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500">¿Cuánto dinero necesita recaudar el curso para el viaje o la fiesta?</p>
+      <div>
+        <label for="goal-input" class="block text-xs font-bold uppercase text-slate-600 mb-1">Monto Objetivo ($)</label>
+        <div class="relative">
+          <span class="absolute left-3.5 top-3 text-slate-400 font-bold">$</span>
+          <input 
+            type="number" 
+            id="goal-input" 
+            min="0" 
+            step="1000"
+            class="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500" 
+            placeholder="Ej: 5000000"
+          >
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button id="btn-cancel-goal" class="flex-1 text-xs py-2.5 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+          Cancelar
+        </button>
+        <button id="btn-save-goal" class="flex-1 text-xs py-2.5 rounded-xl font-bold bg-brand-600 hover:bg-brand-700 text-white transition shadow-sm">
+          Guardar Meta
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== -->
+  <!-- MODAL: CONFIRMAR VACIADO        -->
+  <!-- =============================== -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 space-y-4">
+      <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <div class="text-center">
+        <h4 class="font-bold text-slate-800 text-base">¿Reiniciar todos los datos?</h4>
+        <p class="text-xs text-slate-500 mt-1">Esta acción borrará todos los ingresos y gastos guardados en este navegador. No se puede deshacer.</p>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button id="btn-cancel-clear" class="flex-1 text-xs py-2.5 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+          Cancelar
+        </button>
+        <button id="btn-confirm-clear" class="flex-1 text-xs py-2.5 rounded-xl font-bold bg-rose-600 hover:bg-rose-700 text-white transition shadow-sm">
+          Sí, eliminar todo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== -->
+  <!-- FOOTER                          -->
+  <!-- =============================== -->
+  <footer class="mt-auto border-t border-slate-200/80 bg-white py-6 text-center text-xs text-slate-400 no-print">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2 font-medium text-slate-600">
+        <span>🎓 Gestor de Egresados</span>
+        <span>•</span>
+        <span>Organización Financiera Estudiantil</span>
+      </div>
+      <div>
+        <p>Datos almacenados localmente de forma segura en tu navegador (LocalStorage) 💾</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =============================== -->
+  <!-- JAVASCRIPT DINÁMICO             -->
+  <!-- =============================== -->
+  <script>
+    /**
+     * GESTOR DE EGRESADOS - APLICACIÓN FINANCIERA
+     * Manejo completo del estado, renderizado, validación y persistencia
+     */
+
+    // Categorías predefinidas temáticas para graduación
+    const CATEGORIES = {
+      ingreso: [
+        { id: 'cuotas', label: 'Cuotas de Alumnos', icon: 'users', color: 'emerald' },
+        { id: 'rifas', label: 'Rifas y Sorteos', icon: 'ticket', color: 'amber' },
+        { id: 'comida', label: 'Venta de Comida / Buffet', icon: 'utensils', color: 'orange' },
+        { id: 'eventos', label: 'Fiestas / Eventos Pro-Fondo', icon: 'party-popper', color: 'purple' },
+        { id: 'donaciones', label: 'Donaciones / Sponsors', icon: 'gift', color: 'blue' },
+        { id: 'otros_ingresos', label: 'Otros Ingresos', icon: 'plus-circle', color: 'slate' }
+      ],
+      gasto: [
+        { id: 'viaje', label: 'Viaje de Egresados (Transporte/Hotel)', icon: 'plane', color: 'rose' },
+        { id: 'salon', label: 'Salón de Fiesta & Cena', icon: 'glass-water', color: 'pink' },
+        { id: 'buzos', label: 'Buzos / Chombas de Promo', icon: 'shirt', color: 'violet' },
+        { id: 'dj', label: 'DJ, Luces y Sonido', icon: 'music', color: 'indigo' },
+        { id: 'foto', label: 'Fotografía & Video', icon: 'camera', color: 'cyan' },
+        { id: 'cotillon', label: 'Decoración & Cotillón', icon: 'sparkles', color: 'yellow' },
+        { id: 'seguridad', label: 'Seguridad y Permisos', icon: 'shield-check', color: 'teal' },
+        { id: 'otros_gastos', label: 'Otros Gastos', icon: 'minus-circle', color: 'slate' }
+      ]
+    };
+
+    // Datos de ejemplo para una demo rápida
+    const DEMO_MOVEMENTS = [
+      { id: 'demo-1', description: 'Primer pago Cuotas de Alumnos (15 personas)', type: 'ingreso', amount: 450000, category: 'Cuotas de Alumnos', date: '2026-03-10' },
+      { id: 'demo-2', description: 'Venta de empanadas pro-viaje', type: 'ingreso', amount: 185000, category: 'Venta de Comida / Buffet', date: '2026-03-22' },
+      { id: 'demo-3', description: 'Seña Salón de Fiesta y Cena', type: 'gasto', amount: 200000, category: 'Salón de Fiesta & Cena', date: '2026-03-25' },
+      { id: 'demo-4', description: 'Rifa canasta de pascuas', type: 'ingreso', amount: 120000, category: 'Rifas y Sorteos', date: '2026-04-05' },
+      { id: 'demo-5', description: 'Seña Buzos de Egresados', type: 'gasto', amount: 150000, category: 'Buzos / Chombas de Promo', date: '2026-04-12' },
+      { id: 'demo-6', description: 'Segunda cuota mensual (18 personas)', type: 'ingreso', amount: 540000, category: 'Cuotas de Alumnos', date: '2026-04-20' },
+      { id: 'demo-7', description: 'Seña DJ y Sistema de Luces', type: 'gasto', amount: 80000, category: 'DJ, Luces y Sonido', date: '2026-04-28' },
+    ];
+
+    // ESTADO DE LA APLICACIÓN
+    let movements = [];
+    let savingsGoal = 2500000; // Meta por defecto
+    let activeFilterType = 'all'; // 'all', 'ingreso', 'gasto'
+    let activeCategoryFilter = 'all';
+    let searchQuery = '';
+    let categoryChart = null;
+
+    // ELEMENTOS DOM
+    const form = document.getElementById('movement-form');
+    const descInput = document.getElementById('desc-input');
+    const amountInput = document.getElementById('amount-input');
+    const dateInput = document.getElementById('date-input');
+    const categorySelect = document.getElementById('category-select');
+    const typeRadios = document.querySelectorAll('input[name="movement-type"]');
+    
+    // Stats DOM
+    const statIncomeEl = document.getElementById('stat-income');
+    const statIncomeCountEl = document.getElementById('stat-income-count');
+    const statExpensesEl = document.getElementById('stat-expenses');
+    const statExpensesCountEl = document.getElementById('stat-expenses-count');
+    const statBalanceEl = document.getElementById('stat-balance');
+    const statBalanceStatusEl = document.getElementById('stat-balance-status');
+    const statGoalEl = document.getElementById('stat-goal');
+    const goalProgressBar = document.getElementById('goal-progress-bar');
+    const goalProgressText = document.getElementById('goal-progress-text');
+    const goalRemainingText = document.getElementById('goal-remaining-text');
+
+    // List DOM
+    const tbody = document.getElementById('movements-tbody');
+    const emptyState = document.getElementById('empty-state');
+    const totalRecordsBadge = document.getElementById('total-records-badge');
+    const filteredCountEl = document.getElementById('filtered-count');
+    const searchInput = document.getElementById('search-input');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const filterCategorySelect = document.getElementById('filter-category');
+
+    // Modals
+    const goalModal = document.getElementById('goal-modal');
+    const goalInput = document.getElementById('goal-input');
+    const btnEditGoal = document.getElementById('btn-edit-goal');
+    const btnCloseGoalModal = document.getElementById('btn-close-goal-modal');
+    const btnCancelGoal = document.getElementById('btn-cancel-goal');
+    const btnSaveGoal = document.getElementById('btn-save-goal');
+
+    const confirmModal = document.getElementById('confirm-modal');
+    const btnClearAll = document.getElementById('btn-clear-all');
+    const btnCancelClear = document.getElementById('btn-cancel-clear');
+    const btnConfirmClear = document.getElementById('btn-confirm-clear');
+
+    // Other Buttons
+    const btnDemo = document.getElementById('btn-demo');
+    const btnDemoEmpty = document.getElementById('btn-demo-empty');
+    const btnExportCsv = document.getElementById('btn-export-csv');
+
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default date to today
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+
+      // Load from LocalStorage
+      loadFromStorage();
+
+      // Populate initial categories
+      updateCategoryOptions('ingreso');
+
+      // Setup Chart
+      initChart();
+
+      // Setup Listeners
+      setupEventListeners();
+
+      // First Render
+      renderApp();
+    });
+
+    // ==========================================
+    // PERSISTENCIA (LOCALSTORAGE)
+    // ==========================================
+    function loadFromStorage() {
+      try {
+        const storedMovements = localStorage.getItem('egresados_movements');
+        if (storedMovements) {
+          movements = JSON.parse(storedMovements);
+        } else {
+          // If totally empty, optionally keep empty or let them click demo
+          movements = [];
+        }
+
+        const storedGoal = localStorage.getItem('egresados_goal');
+        if (storedGoal) {
+          savingsGoal = parseFloat(storedGoal) || 2500000;
+        }
+      } catch (err) {
+        console.error('Error al cargar de localStorage:', err);
+        movements = [];
+      }
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem('egresados_movements', JSON.stringify(movements));
+        localStorage.setItem('egresados_goal', savingsGoal.toString());
+      } catch (err) {
+        console.error('Error al guardar en localStorage:', err);
+      }
+    }
+
+    // ==========================================
+    // FORMATEO DE MONEDA Y FECHAS
+    // ==========================================
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        maximumFractionDigits: 2
+      }).format(amount).replace('ARS', '$').trim();
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const parts = dateString.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateString;
+    }
+
+    // ==========================================
+    // CATEGORÍAS DINÁMICAS
+    // ==========================================
+    function getSelectedType() {
+      const selectedRadio = document.querySelector('input[name="movement-type"]:checked');
+      return selectedRadio ? selectedRadio.value : 'ingreso';
+    }
+
+    function updateCategoryOptions(type) {
+      categorySelect.innerHTML = '';
+      const list = CATEGORIES[type] || [];
+      list.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.label;
+        option.textContent = cat.label;
+        categorySelect.appendChild(option);
+      });
+    }
+
+    function updateFilterCategoryOptions() {
+      const currentSelected = filterCategorySelect.value;
+      const allCategories = new Set();
+      movements.forEach(m => allCategories.add(m.category));
+
+      filterCategorySelect.innerHTML = '<option value="all">Todas las categorías</option>';
+      allCategories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        if (cat === currentSelected) opt.selected = true;
+        filterCategorySelect.appendChild(opt);
+      });
+    }
+
+    // ==========================================
+    // CÁLCULO DE TOTALES & DASHBOARD
+    // ==========================================
+    function calculateTotals() {
+      let totalIncome = 0;
+      let totalExpenses = 0;
+      let incomeCount = 0;
+      let expenseCount = 0;
+
+      movements.forEach(m => {
+        const val = parseFloat(m.amount) || 0;
+        if (m.type === 'ingreso') {
+          totalIncome += val;
+          incomeCount++;
+        } else {
+          totalExpenses += val;
+          expenseCount++;
+        }
+      });
+
+      const balance = totalIncome - totalExpenses;
+      return { totalIncome, totalExpenses, balance, incomeCount, expenseCount };
+    }
+
+    function updateDashboard() {
+      const { totalIncome, totalExpenses, balance, incomeCount, expenseCount } = calculateTotals();
+
+      // Actualizar tarjetas principales
+      statIncomeEl.textContent = formatCurrency(totalIncome);
+      statIncomeCountEl.textContent = `${incomeCount} ${incomeCount === 1 ? 'ingreso registrado' : 'ingresos registrados'}`;
+
+      statExpensesEl.textContent = formatCurrency(totalExpenses);
+      statExpensesCountEl.textContent = `${expenseCount} ${expenseCount === 1 ? 'gasto registrado' : 'gastos registrados'}`;
+
+      statBalanceEl.textContent = formatCurrency(balance);
+      
+      // Feedback visual del balance
+      if (balance > 0) {
+        statBalanceEl.className = 'text-2xl sm:text-3xl font-extrabold text-emerald-600';
+        statBalanceStatusEl.textContent = '¡Superávit positivo! 🎉';
+      } else if (balance === 0) {
+        statBalanceEl.className = 'text-2xl sm:text-3xl font-extrabold text-slate-800';
+        statBalanceStatusEl.textContent = 'En equilibrio exacto';
+      } else {
+        statBalanceEl.className = 'text-2xl sm:text-3xl font-extrabold text-rose-600';
+        statBalanceStatusEl.textContent = 'Déficit: se necesita recaudar más ⚠️';
+      }
+
+      // Meta y Progreso
+      statGoalEl.textContent = formatCurrency(savingsGoal);
+      const percentage = savingsGoal > 0 ? Math.min(Math.round((totalIncome / savingsGoal) * 100), 100) : 0;
+      const realPercentage = savingsGoal > 0 ? ((totalIncome / savingsGoal) * 100).toFixed(1) : 0;
+      
+      goalProgressBar.style.width = `${percentage}%`;
+      goalProgressText.textContent = `Progreso: ${realPercentage}%`;
+
+      const diff = savingsGoal - totalIncome;
+      if (diff > 0) {
+        goalRemainingText.textContent = `Faltan: ${formatCurrency(diff)}`;
+      } else {
+        goalRemainingText.textContent = `¡Meta alcanzada! 🎓🏆`;
+      }
+    }
+
+    // ==========================================
+    // RENDERIZADO DE LA TABLA
+    // ==========================================
+    function getFilteredMovements() {
+      return movements.filter(item => {
+        // Filtro por tipo
+        if (activeFilterType !== 'all' && item.type !== activeFilterType) {
+          return false;
+        }
+        // Filtro por categoría
+        if (activeCategoryFilter !== 'all' && item.category !== activeCategoryFilter) {
+          return false;
+        }
+        // Búsqueda en texto
+        if (searchQuery.trim() !== '') {
+          const q = searchQuery.toLowerCase().trim();
+          const matchDesc = item.description.toLowerCase().includes(q);
+          const matchCat = item.category.toLowerCase().includes(q);
+          if (!matchDesc && !matchCat) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const filtered = getFilteredMovements();
+
+      totalRecordsBadge.textContent = `${movements.length} ${movements.length === 1 ? 'registro' : 'registros'}`;
+      filteredCountEl.textContent = `${filtered.length} visibles`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      // Ordenar por fecha descendente (más nuevos arriba)
+      const sorted = [...filtered].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+      tbody.innerHTML = sorted.map(item => {
+        const isIncome = item.type === 'ingreso';
+        const sign = isIncome ? '+' : '-';
+        const badgeBg = isIncome ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200';
+        const amountColor = isIncome ? 'text-emerald-600' : 'text-rose-600';
+        const iconName = isIncome ? 'arrow-down-left' : 'arrow-up-right';
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition-colors group">
+            <!-- Fecha -->
+            <td class="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap font-medium">
+              ${formatDate(item.date)}
+            </td>
+            <!-- Descripción -->
+            <td class="py-3.5 px-4 font-semibold text-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${isIncome ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}">
+                  <i data-lucide="${iconName}" class="w-3.5 h-3.5"></i>
+                </span>
+                <span class="break-words">${escapeHTML(item.description)}</span>
+              </div>
+            </td>
+            <!-- Categoría -->
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badgeBg}">
+                ${escapeHTML(item.category)}
+              </span>
+            </td>
+            <!-- Monto -->
+            <td class="py-3.5 px-4 text-right whitespace-nowrap font-bold ${amountColor}">
+              ${sign} ${formatCurrency(item.amount)}
+            </td>
+            <!-- Acción -->
+            <td class="py-3.5 px-4 text-center whitespace-nowrap no-print">
+              <button 
+                onclick="handleDeleteMovement('${item.id}')" 
+                class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" 
+                title="Eliminar movimiento"
+              >
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Refresh icons
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // GRÁFICO (CHART.JS)
+    // ==========================================
+    function initChart() {
+      const ctx = document.getElementById('category-chart').getContext('2d');
+      categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: [],
+          datasets: [{
+            data: [],
+            backgroundColor: [
+              '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', 
+              '#3b82f6', '#06b6d4', '#f43f5e', '#64748b'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 10,
+                font: { size: 10, family: '"Plus Jakarta Sans", sans-serif' },
+                padding: 10
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.label}: ${formatCurrency(context.raw)}`;
+                }
+              }
+            }
+          },
+          cutout: '68%'
+        }
+      });
+    }
+
+    function updateChart() {
+      if (!categoryChart) return;
+
+      const chartEmptyEl = document.getElementById('chart-empty');
+      const chartCanvas = document.getElementById('category-chart');
+
+      // Agrupar por categoría (priorizando gastos si hay, o ingresos)
+      const expenses = movements.filter(m => m.type === 'gasto');
+      const targetItems = expenses.length > 0 ? expenses : movements.filter(m => m.type === 'ingreso');
+      const chartBadge = document.getElementById('chart-badge');
+
+      if (expenses.length > 0) {
+        chartBadge.textContent = 'Gastos';
+        chartBadge.className = 'text-xs bg-rose-50 text-rose-700 font-semibold px-2.5 py-1 rounded-full border border-rose-200';
+      } else {
+        chartBadge.textContent = 'Ingresos';
+        chartBadge.className = 'text-xs bg-emerald-50 text-emerald-700 font-semibold px-2.5 py-1 rounded-full border border-emerald-200';
+      }
+
+      if (targetItems.length === 0) {
+        chartCanvas.classList.add('hidden');
+        chartEmptyEl.classList.remove('hidden');
+        return;
+      }
+
+      chartCanvas.classList.remove('hidden');
+      chartEmptyEl.classList.add('hidden');
+
+      const map = {};
+      targetItems.forEach(item => {
+        map[item.category] = (map[item.category] || 0) + parseFloat(item.amount);
+      });
+
+      const labels = Object.keys(map);
+      const data = Object.values(map);
+
+      categoryChart.data.labels = labels;
+      categoryChart.data.datasets[0].data = data;
+      categoryChart.update();
+    }
+
+    // ==========================================
+    // RENDER GLOBAL
+    // ==========================================
+    function renderApp() {
+      updateDashboard();
+      updateFilterCategoryOptions();
+      renderTable();
+      updateChart();
+    }
+
+    // ==========================================
+    // ACCIONES: AGREGAR & ELIMINAR
+    // ==========================================
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const desc = descInput.value.trim();
+      const amount = parseFloat(amountInput.value);
+      const date = dateInput.value;
+      const type = getSelectedType();
+      const category = categorySelect.value;
+
+      let hasError = false;
+
+      // Validación Descripción
+      if (!desc) {
+        document.getElementById('desc-error').classList.remove('hidden');
+        descInput.classList.add('border-rose-400', 'bg-rose-50/20');
+        hasError = true;
+      } else {
+        document.getElementById('desc-error').classList.add('hidden');
+        descInput.classList.remove('border-rose-400', 'bg-rose-50/20');
+      }
+
+      // Validación Monto
+      if (isNaN(amount) || amount <= 0) {
+        document.getElementById('amount-error').classList.remove('hidden');
+        amountInput.classList.add('border-rose-400', 'bg-rose-50/20');
+        hasError = true;
+      } else {
+        document.getElementById('amount-error').classList.add('hidden');
+        amountInput.classList.remove('border-rose-400', 'bg-rose-50/20');
+      }
+
+      if (hasError) return;
+
+      // Crear nuevo registro
+      const newMovement = {
+        id: 'mov_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        description: desc,
+        amount: amount,
+        type: type,
+        category: category,
+        date: date || new Date().toISOString().split('T')[0]
+      };
+
+      movements.unshift(newMovement);
+      saveToStorage();
+      renderApp();
+
+      // Efecto confetti si es un ingreso significativo
+      if (type === 'ingreso') {
+        triggerConfetti();
+        showToast('¡Ingreso registrado con éxito! 🎓💸', 'success');
+      } else {
+        showToast('Gasto asentado correctamente', 'info');
+      }
+
+      // Resetear inputs del formulario
+      descInput.value = '';
+      amountInput.value = '';
+      descInput.focus();
+    }
+
+    function handleDeleteMovement(id) {
+      const index = movements.findIndex(m => m.id === id);
+      if (index !== -1) {
+        const deleted = movements.splice(index, 1)[0];
+        saveToStorage();
+        renderApp();
+        showToast(`Eliminado: "${deleted.description}"`, 'error');
+      }
+    }
+
+    // ==========================================
+    // NOTIFICACIONES TOAST
+    // ==========================================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let colors = 'bg-slate-800 text-white';
+      let icon = 'info';
+
+      if (type === 'success') {
+        colors = 'bg-emerald-600 text-white';
+        icon = 'check-circle';
+      } else if (type === 'error') {
+        colors = 'bg-rose-600 text-white';
+        icon = 'trash';
+      }
+
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold transition-all transform duration-300 translate-y-2 opacity-0 ${colors}`;
+      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4"></i> <span>${escapeHTML(message)}</span>`;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Animación entrada
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      // Salida automática
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // ==========================================
+    // EXPORTACIÓN A CSV
+    // ==========================================
+    function exportToCSV() {
+      if (movements.length === 0) {
+        showToast('No hay datos para exportar', 'error');
+        return;
+      }
+
+      const headers = ['Fecha', 'Descripción', 'Tipo', 'Categoría', 'Monto'];
+      const rows = movements.map(m => [
+        `"${m.date}"`,
+        `"${m.description.replace(/"/g, '""')}"`,
+        `"${m.type.toUpperCase()}"`,
+        `"${m.category}"`,
+        m.amount
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+        + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Finanzas_Egresados_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('Planilla CSV descargada exitosamente 📊', 'success');
+    }
+
+    // ==========================================
+    // CELEBRACIÓN CON CONFETTI
+    // ==========================================
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ['#8b5cf6', '#fbbf24', '#10b981', '#6366f1']
+        });
+      }
+    }
+
+    // ==========================================
+    // SEGURIDAD / SANITIZACIÓN
+    // ==========================================
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag)
+      );
+    }
+
+    // ==========================================
+    // LISTENERS & EVENTOS
+    // ==========================================
+    function setupEventListeners() {
+      // Cambio de tipo de movimiento (radio)
+      typeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          updateCategoryOptions(e.target.value);
+        });
+      });
+
+      // Submit Form
+      form.addEventListener('submit', handleFormSubmit);
+
+      // Limpiar errores mientras escribe
+      descInput.addEventListener('input', () => {
+        document.getElementById('desc-error').classList.add('hidden');
+        descInput.classList.remove('border-rose-400', 'bg-rose-50/20');
+      });
+      amountInput.addEventListener('input', () => {
+        document.getElementById('amount-error').classList.add('hidden');
+        amountInput.classList.remove('border-rose-400', 'bg-rose-50/20');
+      });
+
+      // Filtros por Tipo (Todos / Ingresos / Gastos)
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterButtons.forEach(b => {
+            b.classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
+            b.classList.add('text-slate-600');
+          });
+          btn.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
+          btn.classList.remove('text-slate-600');
+
+          activeFilterType = btn.getAttribute('data-filter');
+          renderTable();
+        });
+      });
+
+      // Filtro por Categoría
+      filterCategorySelect.addEventListener('change', (e) => {
+        activeCategoryFilter = e.target.value;
+        renderTable();
+      });
+
+      // Búsqueda en vivo
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderTable();
+      });
+
+      // Cargar Datos Demo
+      const loadDemoHandler = () => {
+        movements = JSON.parse(JSON.stringify(DEMO_MOVEMENTS));
+        savingsGoal = 2500000;
+        saveToStorage();
+        renderApp();
+        triggerConfetti();
+        showToast('¡Datos de ejemplo cargados con éxito! 🎓', 'success');
+      };
+
+      btnDemo.addEventListener('click', loadDemoHandler);
+      btnDemoEmpty.addEventListener('click', loadDemoHandler);
+
+      // Exportar CSV
+      btnExportCsv.addEventListener('click', exportToCSV);
+
+      // Modal Meta
+      btnEditGoal.addEventListener('click', () => {
+        goalInput.value = savingsGoal;
+        goalModal.classList.remove('hidden');
+        goalInput.focus();
+      });
+      const closeGoalModal = () => goalModal.classList.add('hidden');
+      btnCloseGoalModal.addEventListener('click', closeGoalModal);
+      btnCancelGoal.addEventListener('click', closeGoalModal);
+      btnSaveGoal.addEventListener('click', () => {
+        const val = parseFloat(goalInput.value);
+        if (!isNaN(val) && val >= 0) {
+          savingsGoal = val;
+          saveToStorage();
+          updateDashboard();
+          closeGoalModal();
+          showToast('Meta económica actualizada 🎯', 'success');
+        }
+      });
+
+      // Modal Reiniciar
+      btnClearAll.addEventListener('click', () => {
+        confirmModal.classList.remove('hidden');
+      });
+      const closeClearModal = () => confirmModal.classList.add('hidden');
+      btnCancelClear.addEventListener('click', closeClearModal);
+      btnConfirmClear.addEventListener('click', () => {
+        movements = [];
+        saveToStorage();
+        renderApp();
+        closeClearModal();
+        showToast('Se eliminaron todos los movimientos', 'info');
+      });
+    }
+
+    // Exponer la función de eliminar al scope global para los botones en la tabla
+    window.handleDeleteMovement = handleDeleteMovement;
+  </script>
+</body>
+</html>
